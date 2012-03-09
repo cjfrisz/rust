@@ -1,4 +1,5 @@
 // xfail-pretty
+// xfail-test
 
 use std;
 use rustc;
