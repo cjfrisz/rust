@@ -74,23 +74,16 @@ fn trans_static_callee(bcx: block, callee_id: ast::node_id,
      with lval_static_fn(bcx, did, callee_id, substs)}
 }
 
-fn wrapper_fn_ty(ccx: crate_ctxt, vtable_ty: TypeRef, fty: ty::t,
-                 tps: @[ty::param_bounds]) -> {ty: ty::t, llty: TypeRef} {
-    let bare_fn_ty = type_of_fn_from_ty(ccx, fty, (*tps).len());
-    let {inputs, output} = llfn_arg_tys(bare_fn_ty);
-    {ty: fty, llty: T_fn([vtable_ty] + inputs, output)}
-}
-
 fn trans_vtable_callee(bcx: block, env: callee_env, vtable: ValueRef,
                        callee_id: ast::node_id, n_method: uint)
     -> lval_maybe_callee {
     let bcx = bcx, ccx = bcx.ccx();
     let fty = node_id_type(bcx, callee_id);
-    let llfty = type_of::type_of_fn_from_ty(ccx, fty, 0u);
+    let llfty = type_of::type_of_fn_from_ty(ccx, fty);
     let vtable = PointerCast(bcx, vtable,
                              T_ptr(T_array(T_ptr(llfty), n_method + 1u)));
     let mptr = Load(bcx, GEPi(bcx, vtable, [0, n_method as int]));
-    {bcx: bcx, val: mptr, kind: owned, env: env, tds: none}
+    {bcx: bcx, val: mptr, kind: owned, env: env}
 }
 
 fn method_with_name(ccx: crate_ctxt, impl_id: ast::def_id,
@@ -255,27 +248,13 @@ fn make_impl_vtable(ccx: crate_ctxt, impl_id: ast::def_id, substs: [ty::t],
         let fty = ty::substitute_type_params(tcx, substs,
                                              ty::mk_fn(tcx, im.fty));
         if (*im.tps).len() > 0u || ty::type_has_vars(fty) {
-            C_null(type_of_fn_from_ty(ccx, fty, 0u))
+            C_null(type_of_fn_from_ty(ccx, fty))
         } else {
             let m_id = method_with_name(ccx, impl_id, im.ident);
-            option::get(monomorphic_fn(ccx, m_id, substs, some(vtables)))
+            monomorphic_fn(ccx, m_id, substs, some(vtables))
         }
     }))
 }
-
-/*
-fn make_iface_vtable(ccx: crate_ctxt, pt: path, it: @ast::item) {
-    let new_pt = pt + [path_name(it.ident), path_name(int::str(it.id))];
-    let i_did = local_def(it.id), i = 0u;
-    let ptrs = vec::map(*ty::iface_methods(ccx.tcx, i_did), {|m|
-        let w = trans_iface_wrapper(ccx, new_pt + [path_name(m.ident)], m, i);
-        i += 1u;
-        w
-    });
-    let s = link::mangle_internal_name_by_path(
-        ccx, new_pt + [path_name("!vtable")]);
-    trans_vtable(ccx, it.id, s, ptrs);
-}*/
 
 fn trans_cast(bcx: block, val: @ast::expr, id: ast::node_id, dest: dest)
     -> block {
