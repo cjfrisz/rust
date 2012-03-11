@@ -113,7 +113,7 @@ fn trans_monomorphized_callee(bcx: block, callee_id: ast::node_id,
         let n_m_tps = method_ty_param_count(ccx, mth_id);
         let node_substs = node_id_type_params(bcx, callee_id);
         let ty_substs = impl_substs +
-            vec::tail_n(node_substs, node_substs.len() - n_m_tps);
+            vec::tailn(node_substs, node_substs.len() - n_m_tps);
         let {bcx, val} = trans_self_arg(bcx, base);
         {env: self_env(val, node_id_type(bcx, base.id))
          with lval_static_fn_inner(bcx, mth_id, callee_id, ty_substs,

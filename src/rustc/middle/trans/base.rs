@@ -2139,7 +2139,7 @@ fn lval_intrinsic_fn(bcx: block, val: ValueRef, tys: [ty::t],
         unsafe { llvm::LLVMGetParamTypes(llfty, vec::unsafe::to_ptr(args)); }
         T_fn(vec::slice(args, 0u, first_real_arg) +
              vec::init_elt(n, T_ptr(ccx.tydesc_type)) +
-             vec::tail_n(args, first_real_arg), out_ty)
+             vec::tailn(args, first_real_arg), out_ty)
     }
 
     let bcx = bcx, ccx = bcx.ccx();
@@ -2764,7 +2764,7 @@ fn trans_call_inner(in_cx: block, fn_expr_ty: ty::t,
         let llargs = args_res.args;
         option::may(f_res.tds) {|vals|
             llargs = vec::slice(llargs, 0u, first_real_arg) + vals +
-                vec::tail_n(llargs, first_real_arg);
+                vec::tailn(llargs, first_real_arg);
         }
 
         let llretslot = args_res.retslot;
